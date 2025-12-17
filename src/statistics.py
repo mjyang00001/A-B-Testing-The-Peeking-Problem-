@@ -39,11 +39,43 @@ class SPRT:
         Returns:
             Log likelihood ratio statistic
         """
-        p_a = conversions_a / trials_a
-        p_b = conversions_b / trials_b
-        pooled_conversion_rate = (conversions_a + conversions_b) / (trials_a + trials_b)
-        p_b_alt = pooled_conversion_rate * (1 + mde)
-        pass
+        # Check if there is data
+        if trials_a == 0 or trials_b == 0:
+            return 0.0
+        
+        # Check if there is enough data
+        MIN_SAMPLES = 5
+        if trials_a < MIN_SAMPLES or trials_b < MIN_SAMPLES:
+            return 0.0
+
+        epsilon = 1e-10
+        pooled_conversion_rate = np.clip(
+            (conversions_a + conversions_b) / (trials_a + trials_b),
+            epsilon, 1 - epsilon
+        )
+        # Clip p_b_alt to ensure it's a valid probability
+        p_b_alt = np.clip(
+            pooled_conversion_rate * (1 + self.mde),
+            epsilon, 1 - epsilon
+        )
+        
+        # Log Likelihood under H0: both groups have pooled rate
+        ll_null = (
+            conversions_a * np.log(pooled_conversion_rate) +
+            (trials_a - conversions_a) * np.log(1 - pooled_conversion_rate) +
+            conversions_b * np.log(pooled_conversion_rate) +
+            (trials_b - conversions_b) * np.log(1 - pooled_conversion_rate)
+        )
+
+        # Log Likelihood under H1: A has pooled rate, B has higher rate
+        ll_alt = (
+            conversions_a * np.log(pooled_conversion_rate) +
+            (trials_a - conversions_a) * np.log(1 - pooled_conversion_rate) +
+            conversions_b * np.log(p_b_alt) +
+            (trials_b - conversions_b) * np.log(1 - p_b_alt)
+        )
+        
+        return ll_alt - ll_null
 
     def get_decision(self, llr):
         """
