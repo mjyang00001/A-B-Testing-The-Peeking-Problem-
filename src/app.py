@@ -15,12 +15,14 @@ def main():
 
     with st.sidebar:
         st.header("⚙️ Test Parameters")
-        alpha = st.slider("Significance Level (α)", 0.01, 0.10, 0.05, 0.01)
+        alpha = st.slider("Significance Level (α)", 0.01, .90, 0.05, 0.01)
         power = st.slider("Statistical Power (1-β)", 0.70, 0.95, 0.80, 0.05)
         mde = st.slider("Minimum Detectable Effect (%)", 1.0, 10.0, 2.0, 0.5)
 
         st.markdown("---")
-        st.info("Upload your A/B test data to get started!")
+        st.header("💰 Business Context")
+        avg_order_value = st.number_input("Average Order Value ($)", value=45.0, step=1.0)
+        monthly_visitors = st.number_input("Monthly Visitors", value=50000, step=1000)
 
     load_dotenv()
     file_path = os.getenv('DATA_PATH')
@@ -34,6 +36,16 @@ def main():
     st.write(f"Date Range: {user_data['first_date'].min()} to {user_data['first_date'].max()}")
 
     group_a, group_b = create_ab_split(user_data, group_size=30000)
+
+    #Force artificial win to see Business Impact
+    if st.sidebar.checkbox("🧪 Simulate Artificial Lift (Force Win To See Business Impact)"):
+        # Create a copy to avoid SettingWithCopy warnings
+        group_b = group_b.copy()
+        
+        np.random.seed(42)
+        group_b['converted'] = np.random.binomial(1, 0.15, len(group_b))
+        
+        st.sidebar.warning("⚠️ Artificial lift enabled! Group B is now ~15%.")
 
     st.markdown("---")
     st.subheader("🔀 A/B Test Groups")
@@ -75,6 +87,29 @@ def main():
     if latest_decision == "STOP_B_WINS":
         st.success("✅ **STOP THE TEST - B is the Winner!**")
         st.write("The test has crossed the upper boundary. Variant B has a statistically significant improvement.")
+
+        st.markdown("### 💸 Revenue Impact Analysis")
+        
+        conv_rate_a = group_a['converted'].mean()
+        conv_rate_b = group_b['converted'].mean()
+        
+        monthly_gain, annual_gain = calculate_business_impact(
+            conv_rate_a, 
+            conv_rate_b, 
+            monthly_visitors, 
+            avg_order_value
+        )
+        
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Conversion Lift", f"+{(conv_rate_b - conv_rate_a):.2%}")
+        with col2:
+            st.metric("Proj. Monthly Revenue", f"+${monthly_gain:,.2f}")
+        with col3:
+            st.metric("Proj. Annual Revenue", f"+${annual_gain:,.2f}")
+            
+        st.info(f"**Business Insight:** By stopping this test at step {len(sprt_results)} (instead of waiting for a fixed sample size), you can deploy Variant B immediately and capture an extra **${(monthly_gain/30) * 10:,.0f}** in revenue over the next 10 days.")
+
     elif latest_decision == "STOP_NO_EFFECT":
         st.info("⏹️ **STOP THE TEST - No Significant Effect**")
         st.write("The test has crossed the lower boundary. There is no significant difference between A and B.")
@@ -276,6 +311,31 @@ def plot_sprt_chart(sprt_results, sprt):
 
     return fig
 
+
+def calculate_business_impact(conversion_rate_a, conversion_rate_b, visitors, aov):
+    """
+    Calculate the potential revenue impact of the test result
+
+    Args:
+        conversion_rate_a (float): Conversion rate of the control group (0.0 to 1.0).
+        conversion_rate_b (float): Conversion rate of the test group (0.0 to 1.0).
+        visitors (int): Number of monthly visitors to the tested page/flow.
+        aov (float): Average Order Value in dollars.
+
+    Returns:
+        Tuple: (monthly gain, annual gain) float
+    """
+    lift = conversion_rate_b - conversion_rate_a
+    
+    # If B is worse or equal, no gain
+    if lift <= 0:
+        return 0.0, 0.0
+        
+    incremental_conversions = visitors * lift
+    monthly_gain = incremental_conversions * aov
+    annual_gain = monthly_gain * 12
+    
+    return monthly_gain, annual_gain
 
 if __name__ == "__main__":
     main()
