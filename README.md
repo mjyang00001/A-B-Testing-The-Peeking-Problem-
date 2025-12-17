@@ -1,3 +1,5 @@
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://fzgrxvujrbs8oipfexg6vb.streamlit.app/)
+
 # Case Study: Solving the A/B Testing Peeking Problem with SPRT
 
 ## 📊 Executive Summary
