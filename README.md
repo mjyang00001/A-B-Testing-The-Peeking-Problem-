@@ -103,6 +103,8 @@ Launch the Streamlit dashboard to monitor A/B tests in real-time:
 streamlit run src/app.py
 ```
 
+Demo Feature: Once the app is running, check the "Simulate Artificial Lift" box in the sidebar. This injects a synthetic 15% conversion lift into Group B, allowing you to instantly visualize how the SPRT algorithm detects a winner and triggers the Revenue Impact Analysis.
+
 The dashboard provides:
 - Real-time test statistics and decision boundaries
 - Visual representation of sequential test progress
