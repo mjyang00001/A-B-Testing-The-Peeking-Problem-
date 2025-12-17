@@ -1,3 +1,5 @@
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://fzgrxvujrbs8oipfexg6vb.streamlit.app/)
+
 # Case Study: Solving the A/B Testing Peeking Problem with SPRT
 
 ## 📊 Executive Summary
@@ -70,8 +72,6 @@ I validated the SPRT implementation against traditional testing using simulation
 * **Cost of Errors:** I realized that Type I errors (False Positives) are often more expensive than running tests longer because they lead to permanent implementation of bad ideas.
 * **Communication:** Advanced statistics are useless if stakeholders don't trust them. The dashboard was essential to bridge the gap between the math and the decision-makers.
 
-### Live Demo (may take a few seconds to load)
-https://fzgrxvujrbs8oipfexg6vb.streamlit.app/
 ---
 
 ## 🛠️ Installation & Usage
